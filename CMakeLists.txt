@@ -27,15 +27,14 @@ include("cmake/gcc-arm-none-eabi.cmake")
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-# Enable CMake support for ASM and C languages
-enable_language(C ASM)
-
 #
 set(CMAKE_C_FLAGS_DEBUG "-g -Og -DDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Og -DDEBUG")
 
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
+# Enable CMake support for ASM and C languages
+enable_language(C ASM)
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
 # Create an executable object type
