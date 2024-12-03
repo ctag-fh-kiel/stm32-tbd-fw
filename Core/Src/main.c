@@ -18,6 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
+#include <string.h>
+
 #include "adc.h"
 #include "i2c.h"
 #include "tim.h"
@@ -25,32 +28,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
-/* Size of Transmission buffer */
-#define TXBUFFERSIZE                      (COUNTOF(aTxBuffer))
-/* Size of Reception buffer */
-#define RXBUFFERSIZE                      TXBUFFERSIZE
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 __IO uint32_t Transfer_Direction = 0;
 __IO uint32_t Xfer_Complete = 0;
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-/* Buffer used for transmission */
-uint8_t aTxBuffer[4];
-
-/* Buffer used for reception */
-uint8_t aRxBuffer[4];
-/* USER CODE END PD */
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -66,7 +50,8 @@ uint8_t aRxBuffer[4];
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+data_t data;
+data_t t_d_buffer;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -83,17 +68,19 @@ void SystemClock_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
-int main(void){
-    /* USER CODE BEGIN 1 */
+int main(void)
+{
 
-    /* USER CODE END 1 */
+  /* USER CODE BEGIN 1 */
 
-    /* MCU Configuration--------------------------------------------------------*/
+  /* USER CODE END 1 */
 
-    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-    HAL_Init();
+  /* MCU Configuration--------------------------------------------------------*/
 
-    /* USER CODE BEGIN Init */
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
     /*
     // clock to 48MHz
     // Enable HSI (8 MHz internal clock)
@@ -116,45 +103,36 @@ int main(void){
     while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL); // Wait for switch
     */
 
-    aRxBuffer[0] = 0x00;
-    aRxBuffer[1] = 0x00;
-    aRxBuffer[2] = 0x00;
-    aRxBuffer[3] = 0x00;
-    aTxBuffer[0] = 0xAA;
-    aTxBuffer[1] = 0xBB;
-    aTxBuffer[2] = 0xCC;
-    aTxBuffer[3] = 0xDD;
+    memset(&data, 0, sizeof(data_t));
+    memset(&t_d_buffer, 0, sizeof(data_t));
 
-    /* USER CODE END Init */
+  /* USER CODE END Init */
 
-    /* Configure the system clock */
-    SystemClock_Config();
+  /* Configure the system clock */
+  SystemClock_Config();
 
-    /* USER CODE BEGIN SysInit */
+  /* USER CODE BEGIN SysInit */
 
-    /* USER CODE END SysInit */
+  /* USER CODE END SysInit */
 
-    /* Initialize all configured peripherals */
-    MX_GPIO_Init();
-    MX_ADC_Init();
-    MX_I2C1_Init();
-    MX_TIM1_Init();
-    /* USER CODE BEGIN 2 */
-
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_ADC_Init();
+  MX_I2C1_Init();
+  MX_TIM1_Init();
+  /* USER CODE BEGIN 2 */
+    HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
     if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
         /* Transfer error in reception process */
         Error_Handler();
     }
 
-    /* USER CODE END 2 */
+  /* USER CODE END 2 */
 
-    /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
     // data fields
-    volatile uint16_t adc_values[8];
-    volatile uint16_t d_btns = 0;
-    volatile uint8_t f_btns = 0;
-    volatile uint8_t encoder = 0;
+
     while (1){
         // get ports A, B, C, and F
         uint16_t port_a_din = GPIOA->IDR;
@@ -163,7 +141,7 @@ int main(void){
         uint16_t port_f_din = GPIOF->IDR;
 
         // data button 0-15 mapping is (PB12,PB11,PB1,PB14,PA11,PF6,PB3,PB5,BP10,PB2,PB0,PB15,PA10,PA12,PA15,PB4)
-        d_btns = (port_b_din & (1 << 12)) >> (12 - 0) |
+        data.d_btns = (port_b_din & (1 << 12)) >> (12 - 0) |
             (port_b_din & (1 << 11)) >> (11 - 1) |
             (port_b_din & (1 << 1)) << (1) |
             (port_b_din & (1 << 14)) >> (14 - 3) |
@@ -179,26 +157,23 @@ int main(void){
             (port_a_din & (1 << 12)) << (1) |
             (port_a_din & (1 << 15)) >> (15 - 14) |
             (port_b_din & (1 << 4)) << (11);
-        d_btns = ~d_btns;
+        data.d_btns = ~data.d_btns;
 
         // function buttons are (PB8,PB13,PF7,PB9)
-        f_btns = (port_b_din & (1 << 8)) >> (8 - 0) | (port_b_din & (1 << 13)) >> (13 - 1) | (port_f_din & (1 << 7)) >>
+        data.f_btns = (port_b_din & (1 << 8)) >> (8 - 0) | (port_b_din & (1 << 13)) >> (13 - 1) | (port_f_din & (1 << 7)) >>
             (7 - 2) | (port_b_din & (1 << 9)) >> (9 - 3);
-        f_btns = ~f_btns;
-        f_btns = f_btns & 0x0F;
+        data.f_btns = ~data.f_btns;
+        data.f_btns = data.f_btns & 0x0F;
 
         // encoder button is PC13, assign to btns bit 0
-        encoder = (port_c_din & 0x2000) >> 13;
-        encoder = ~encoder;
-        encoder = encoder & 0x01;
+        data.encoder = (port_c_din & 0x2000) >> 13;
+        data.encoder = ~data.encoder;
+        data.encoder = data.encoder & 0x01;
 
 
         if (Xfer_Complete == 1){
             HAL_Delay(1);
-            aTxBuffer[0] = (d_btns & 0xFF00) >> 8;
-            aTxBuffer[1] = d_btns & 0x00FF;
-            aTxBuffer[2] = f_btns;
-            aTxBuffer[3] = encoder;
+            memcpy(&t_d_buffer, &data, sizeof(data_t));
             /*##- Put I2C peripheral in listen mode process ###########################*/
             if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
                 /* Transfer error in reception process */
@@ -208,54 +183,66 @@ int main(void){
         }
 
         //
-        /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-        /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
     }
-    /* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
   * @brief System Clock Configuration
   * @retval None
   */
-void SystemClock_Config(void){
-    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-    RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
-    /** Initializes the RCC Oscillators according to the specified parameters
-    * in the RCC_OscInitTypeDef structure.
-    */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_HSI14;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.HSI14State = RCC_HSI14_ON;
-    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-    RCC_OscInitStruct.HSI14CalibrationValue = 16;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK){
-        Error_Handler();
-    }
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSI14;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSI14State = RCC_HSI14_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.HSI14CalibrationValue = 16;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
-    /** Initializes the CPU, AHB and APB buses clocks
-    */
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-        | RCC_CLOCKTYPE_PCLK1;
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK){
-        Error_Handler();
-    }
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
-    PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK){
-        Error_Handler();
-    }
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
+  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /* USER CODE BEGIN 4 */
+
+
+// good tutorial on encoders https://www.youtube.com/watch?v=xqzWQgpqHmI
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
+    data.counter = __HAL_TIM_GET_COUNTER(&htim1);
+    data.count = (uint16_t) data.counter;
+    data.position = data.count / 4;
+}
 
 /**
   * @brief  Tx Transfer completed callback.
@@ -289,10 +276,7 @@ void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef* I2cHandle){
     /* Toggle LED4: Transfer in reception process is correct */
 
     Xfer_Complete = 1;
-    aRxBuffer[0] = 0x00;
-    aRxBuffer[1] = 0x00;
-    aRxBuffer[2] = 0x00;
-    aRxBuffer[3] = 0x00;
+    // nothing to rx here
 }
 
 
@@ -310,20 +294,22 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef* hi2c, uint8_t TransferDirection, ui
         /*##- Start the transmission process #####################################*/
         /* While the I2C in reception process, user can transmit data through
            "aTxBuffer" buffer */
-        if (HAL_I2C_Slave_Seq_Transmit_IT(&hi2c1, (uint8_t*)aTxBuffer, TXBUFFERSIZE, I2C_FIRST_AND_LAST_FRAME) !=
+        if (HAL_I2C_Slave_Seq_Transmit_IT(&hi2c1, (uint8_t*)&t_d_buffer, sizeof(data_t), I2C_FIRST_AND_LAST_FRAME) !=
             HAL_OK){
             /* Transfer error in transmission process */
             Error_Handler();
         }
     }
+    /*
+     // nothing to rx here
     else{
-        /*##- Put I2C peripheral in reception process ###########################*/
         if (HAL_I2C_Slave_Seq_Receive_IT(&hi2c1, (uint8_t*)aRxBuffer, RXBUFFERSIZE, I2C_FIRST_AND_LAST_FRAME) !=
             HAL_OK){
-            /* Transfer error in reception process */
             Error_Handler();
         }
     }
+    */
+
 }
 
 /**
@@ -358,13 +344,14 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef* I2cHandle){
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void){
-    /* USER CODE BEGIN Error_Handler_Debug */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
     __disable_irq();
     while (1){
     }
-    /* USER CODE END Error_Handler_Debug */
+  /* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT

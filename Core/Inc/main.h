@@ -36,6 +36,16 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef struct{
+    uint16_t adc_values[8];
+    uint16_t d_btns;
+    uint8_t f_btns;
+    uint8_t encoder;
+    uint32_t counter;
+    int16_t count;
+    int16_t position;
+    uint8_t speed;
+} data_t;
 
 /* USER CODE END ET */
 
