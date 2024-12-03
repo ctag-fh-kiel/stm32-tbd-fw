@@ -18,9 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
-#include <string.h>
-
 #include "adc.h"
 #include "i2c.h"
 #include "tim.h"
@@ -28,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -121,6 +118,7 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+    //HAL_TIM_Encoder_Start_IT(&htim1, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
     if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
         /* Transfer error in reception process */
@@ -170,6 +168,9 @@ int main(void)
         data.encoder = ~data.encoder;
         data.encoder = data.encoder & 0x01;
 
+        data.counter = __HAL_TIM_GET_COUNTER(&htim1);
+        data.count = (uint16_t) data.counter;
+        data.position = data.count / 2;
 
         if (Xfer_Complete == 1){
             HAL_Delay(1);
