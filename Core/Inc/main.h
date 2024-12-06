@@ -38,6 +38,8 @@ extern "C" {
 /* USER CODE BEGIN ET */
 typedef struct{
     uint16_t adc_values[8];
+    uint16_t pot_positions[4];
+    uint16_t pot_states;
     uint16_t d_btns;
     uint8_t f_btns;
     uint8_t encoder;

@@ -211,6 +211,9 @@ int main(void)
         // wait for adc
         while (adc_dma_complete != 1);
 
+        // determine forward / backward rotation and speed from endless pot adc values
+
+
         // wait for last i2c transfer request from rp2040 to complete
         while (i2c_transfer_complete != 1);
         // grab data
