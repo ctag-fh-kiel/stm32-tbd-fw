@@ -211,6 +211,8 @@ int main(void)
 
         // send systicks
         data.systicks = HAL_GetTick();
+
+        // do i2c transfer
         while (i2c_transfer_complete != 1);
         memcpy(&t_d_buffer, &data, sizeof(data_t));
         /*##- Put I2C peripheral in listen mode process ###########################*/
