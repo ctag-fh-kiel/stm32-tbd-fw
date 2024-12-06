@@ -44,6 +44,7 @@ typedef struct{
     uint32_t counter;
     int16_t count;
     uint8_t speed;
+    uint32_t systicks;
 } data_t;
 
 /* USER CODE END ET */

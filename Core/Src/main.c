@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "i2c.h"
 #include "tim.h"
 #include "gpio.h"
@@ -32,7 +33,8 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 __IO uint32_t Transfer_Direction = 0;
-__IO uint32_t Xfer_Complete = 0;
+__IO uint32_t i2c_transfer_complete = 0;
+__IO uint32_t adc_dma_complete = 1;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -115,6 +117,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC_Init();
   MX_I2C1_Init();
   MX_TIM1_Init();
@@ -202,15 +205,21 @@ int main(void)
             data.encoder |= 0x08;
         }
 
+        // adc
 
-        while (Xfer_Complete != 1);
+        while (adc_dma_complete != 1);
+        HAL_ADC_Start_DMA(&hadc, (uint32_t*)data.adc_values, 8);
+
+        // send systicks
+        data.systicks = HAL_GetTick();
+        while (i2c_transfer_complete != 1);
         memcpy(&t_d_buffer, &data, sizeof(data_t));
         /*##- Put I2C peripheral in listen mode process ###########################*/
         if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
             /* Transfer error in reception process */
             Error_Handler();
         }
-        Xfer_Complete = 0;
+        i2c_transfer_complete = 0;
 
 
         //
@@ -267,6 +276,11 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+    adc_dma_complete = 1;
+}
+
 
 /**
   * @brief  Tx Transfer completed callback.
@@ -277,7 +291,7 @@ void SystemClock_Config(void)
   */
 
 void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef* I2cHandle){
-    Xfer_Complete = 1;
+    i2c_transfer_complete = 1;
 }
 
 
@@ -289,7 +303,7 @@ void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef* I2cHandle){
   * @retval None
   */
 void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef* I2cHandle){
-    Xfer_Complete = 1;
+    i2c_transfer_complete = 1;
     // nothing to rx here
 }
 
