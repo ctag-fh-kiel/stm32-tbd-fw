@@ -268,12 +268,6 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 
-// good tutorial on encoders https://www.youtube.com/watch?v=xqzWQgpqHmI
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
-    data.counter = __HAL_TIM_GET_COUNTER(&htim1);
-    data.count = (uint16_t) data.counter;
-}
-
 /**
   * @brief  Tx Transfer completed callback.
   *   I2cHandle: I2C handle.
