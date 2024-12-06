@@ -205,22 +205,27 @@ int main(void)
             data.encoder |= 0x08;
         }
 
-        // adc
-        while (adc_dma_complete != 1);
-        HAL_ADC_Start_DMA(&hadc, (uint32_t*)data.adc_values, 8);
-
-        // send systicks
+        // get systicks as timestamp for package
         data.systicks = HAL_GetTick();
 
-        // do i2c transfer
+        // wait for adc
+        while (adc_dma_complete != 1);
+
+        // wait for last i2c transfer request from rp2040 to complete
         while (i2c_transfer_complete != 1);
+        // grab data
+
         memcpy(&t_d_buffer, &data, sizeof(data_t));
-        /*##- Put I2C peripheral in listen mode process ###########################*/
+
+        // start listening for i2c transfer
         if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
             /* Transfer error in reception process */
             Error_Handler();
         }
         i2c_transfer_complete = 0;
+
+        // restart adc dma
+        HAL_ADC_Start_DMA(&hadc, (uint32_t*)data.adc_values, 8);
 
 
         //
