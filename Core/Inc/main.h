@@ -43,7 +43,6 @@ typedef struct{
     uint8_t encoder;
     uint32_t counter;
     int16_t count;
-    int16_t position;
     uint8_t speed;
 } data_t;
 

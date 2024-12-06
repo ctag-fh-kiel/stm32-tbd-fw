@@ -52,10 +52,6 @@
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-int16_t old_position = 0;
-uint32_t index = 0;
-extern data_t data;
-
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -129,12 +125,7 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-  index++;
-  if (index == 500){
-    data.speed = (data.position - old_position) * 2;
-    old_position = data.position;
-    index = 0;
-  }
+
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */

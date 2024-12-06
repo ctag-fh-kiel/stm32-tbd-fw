@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <string.h>
+#include <stdlib.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -130,7 +131,9 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
     // data fields
-
+    uint32_t ticks_counter = 0;
+    uint32_t encoder_old_count = 0;
+    uint32_t encoder_old_count_2 = 0;
     while (1){
         // get ports A, B, C, and F
         uint16_t port_a_din = GPIOA->IDR;
@@ -163,25 +166,52 @@ int main(void)
         data.f_btns = ~data.f_btns;
         data.f_btns = data.f_btns & 0x0F;
 
+        // encoder positions
+        data.counter = __HAL_TIM_GET_COUNTER(&htim1);
+        data.counter >>= 1;
+        data.count = (int16_t) data.counter;
+        // get velocity every 100ms
+        uint32_t ticks = HAL_GetTick();
+        if (ticks - ticks_counter >= 100){
+            data.speed = data.counter > encoder_old_count ? data.counter - encoder_old_count : encoder_old_count - data.counter;
+            encoder_old_count = data.counter;
+            ticks_counter = ticks;
+        }
+
         // encoder button is PC13, assign to btns bit 0
         data.encoder = (port_c_din & 0x2000) >> 13;
         data.encoder = ~data.encoder;
         data.encoder = data.encoder & 0x01;
-
-        data.counter = __HAL_TIM_GET_COUNTER(&htim1);
-        data.count = (uint16_t) data.counter;
-        data.position = data.count / 2;
-
-        if (Xfer_Complete == 1){
-            HAL_Delay(1);
-            memcpy(&t_d_buffer, &data, sizeof(data_t));
-            /*##- Put I2C peripheral in listen mode process ###########################*/
-            if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
-                /* Transfer error in reception process */
-                Error_Handler();
-            }
-            Xfer_Complete = 0;
+        // rotating forward or backward, slow, med or fast?
+        if (data.counter > encoder_old_count_2){
+            // forward
+            data.encoder |= 0x02;
+        }else if (data.counter < encoder_old_count_2){
+            // backward
+            data.encoder |= 0x04;
         }
+        encoder_old_count_2 = data.counter;
+        if (data.speed > 20){
+            // fast spinning
+            data.encoder |= 0x20;
+        }else if (data.speed > 10){
+            // medium spinning
+            data.encoder |= 0x10;
+        }else{
+            // slow spinning
+            data.encoder |= 0x08;
+        }
+
+
+        while (Xfer_Complete != 1);
+        memcpy(&t_d_buffer, &data, sizeof(data_t));
+        /*##- Put I2C peripheral in listen mode process ###########################*/
+        if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
+            /* Transfer error in reception process */
+            Error_Handler();
+        }
+        Xfer_Complete = 0;
+
 
         //
     /* USER CODE END WHILE */
@@ -242,7 +272,6 @@ void SystemClock_Config(void)
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
     data.counter = __HAL_TIM_GET_COUNTER(&htim1);
     data.count = (uint16_t) data.counter;
-    data.position = data.count / 4;
 }
 
 /**
@@ -254,15 +283,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
   */
 
 void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef* I2cHandle){
-    /* Toggle LED4: Transfer in transmission process is correct */
-
     Xfer_Complete = 1;
-    /*
-    aTxBuffer[0]++;
-    aTxBuffer[1]++;
-    aTxBuffer[2]++;
-    aTxBuffer[3]++;
-    */
 }
 
 
@@ -274,8 +295,6 @@ void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef* I2cHandle){
   * @retval None
   */
 void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef* I2cHandle){
-    /* Toggle LED4: Transfer in reception process is correct */
-
     Xfer_Complete = 1;
     // nothing to rx here
 }
