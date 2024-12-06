@@ -206,7 +206,6 @@ int main(void)
         }
 
         // adc
-
         while (adc_dma_complete != 1);
         HAL_ADC_Start_DMA(&hadc, (uint32_t*)data.adc_values, 8);
 
