@@ -216,8 +216,8 @@ int main(void)
 
         // wait for last i2c transfer request from rp2040 to complete
         while (i2c_transfer_complete != 1);
-        // grab data
 
+        // grab data for transfer
         memcpy(&t_d_buffer, &data, sizeof(data_t));
 
         // start listening for i2c transfer
