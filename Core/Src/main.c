@@ -69,20 +69,27 @@ void SystemClock_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
-int main(void)
-{
+int main(void){
+    /* USER CODE BEGIN 1 */
 
-  /* USER CODE BEGIN 1 */
+    /* USER CODE END 1 */
 
-  /* USER CODE END 1 */
+    /* MCU Configuration--------------------------------------------------------*/
 
-  /* MCU Configuration--------------------------------------------------------*/
+    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+    HAL_Init();
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+    /* USER CODE BEGIN Init */
+    memset(&data, 0, sizeof(data_t));
+    memset(&t_d_buffer, 0, sizeof(data_t));
 
-  /* USER CODE BEGIN Init */
-    /*
+    /* USER CODE END Init */
+
+    /* Configure the system clock */
+    SystemClock_Config();
+
+    /* USER CODE BEGIN SysInit */
+
     // clock to 48MHz
     // Enable HSI (8 MHz internal clock)
     RCC->CR |= RCC_CR_HSION;
@@ -102,27 +109,16 @@ int main(void)
     // Select PLL as system clock
     RCC->CFGR |= RCC_CFGR_SW_PLL; // Select PLL as SYSCLK source
     while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL); // Wait for switch
-    */
 
-    memset(&data, 0, sizeof(data_t));
-    memset(&t_d_buffer, 0, sizeof(data_t));
+    /* USER CODE END SysInit */
 
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_ADC_Init();
-  MX_I2C1_Init();
-  MX_TIM1_Init();
-  /* USER CODE BEGIN 2 */
+    /* Initialize all configured peripherals */
+    MX_GPIO_Init();
+    MX_DMA_Init();
+    MX_ADC_Init();
+    MX_I2C1_Init();
+    MX_TIM1_Init();
+    /* USER CODE BEGIN 2 */
     //HAL_TIM_Encoder_Start_IT(&htim1, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
     if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
@@ -130,10 +126,10 @@ int main(void)
         Error_Handler();
     }
 
-  /* USER CODE END 2 */
+    /* USER CODE END 2 */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
     // data fields
     uint32_t ticks_counter = 0;
     uint32_t encoder_old_count = 0;
@@ -168,7 +164,8 @@ int main(void)
         data.d_btns = ~data.d_btns;
 
         // function buttons are (PB8,PB13,PF7,PB9)
-        data.f_btns = (port_b_din & (1 << 8)) >> (8 - 0) | (port_b_din & (1 << 13)) >> (13 - 1) | (port_f_din & (1 << 7)) >>
+        data.f_btns = (port_b_din & (1 << 8)) >> (8 - 0) | (port_b_din & (1 << 13)) >> (13 - 1) | (port_f_din & (1 <<
+                7)) >>
             (7 - 2) | (port_b_din & (1 << 9)) >> (9 - 3);
         data.f_btns = ~data.f_btns;
         data.f_btns = data.f_btns & 0x0F;
@@ -176,11 +173,13 @@ int main(void)
         // encoder positions
         data.counter = __HAL_TIM_GET_COUNTER(&htim1);
         data.counter >>= 1;
-        data.count = (int16_t) data.counter;
+        data.count = (int16_t)data.counter;
         // get velocity every 100ms
         uint32_t ticks = HAL_GetTick();
         if (ticks - ticks_counter >= 100){
-            data.speed = data.counter > encoder_old_count ? data.counter - encoder_old_count : encoder_old_count - data.counter;
+            data.speed = data.counter > encoder_old_count
+                             ? data.counter - encoder_old_count
+                             : encoder_old_count - data.counter;
             encoder_old_count = data.counter;
             ticks_counter = ticks;
         }
@@ -193,7 +192,8 @@ int main(void)
         if (data.counter > encoder_old_count_2){
             // forward
             data.encoder |= 0x02;
-        }else if (data.counter < encoder_old_count_2){
+        }
+        else if (data.counter < encoder_old_count_2){
             // backward
             data.encoder |= 0x04;
         }
@@ -201,10 +201,12 @@ int main(void)
         if (data.speed > 20){
             // fast spinning
             data.encoder |= 0x20;
-        }else if (data.speed > 10){
+        }
+        else if (data.speed > 10){
             // medium spinning
             data.encoder |= 0x10;
-        }else{
+        }
+        else{
             // slow spinning
             data.encoder |= 0x08;
         }
@@ -247,61 +249,56 @@ int main(void)
 
 
         //
-    /* USER CODE END WHILE */
+        /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+        /* USER CODE BEGIN 3 */
     }
-  /* USER CODE END 3 */
+    /* USER CODE END 3 */
 }
 
 /**
   * @brief System Clock Configuration
   * @retval None
   */
-void SystemClock_Config(void)
-{
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+void SystemClock_Config(void){
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSI14;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSI14State = RCC_HSI14_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.HSI14CalibrationValue = 16;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    /** Initializes the RCC Oscillators according to the specified parameters
+    * in the RCC_OscInitTypeDef structure.
+    */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_HSI14;
+    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    RCC_OscInitStruct.HSI14State = RCC_HSI14_ON;
+    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    RCC_OscInitStruct.HSI14CalibrationValue = 16;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK){
+        Error_Handler();
+    }
 
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+    /** Initializes the CPU, AHB and APB buses clocks
+    */
+    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+        | RCC_CLOCKTYPE_PCLK1;
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
-  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK){
+        Error_Handler();
+    }
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
+    PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK){
+        Error_Handler();
+    }
 }
 
 /* USER CODE BEGIN 4 */
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
     adc_dma_complete = 1;
 }
 
@@ -361,7 +358,6 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef* hi2c, uint8_t TransferDirection, ui
         }
     }
     */
-
 }
 
 /**
@@ -396,14 +392,13 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef* I2cHandle){
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
+void Error_Handler(void){
+    /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
     __disable_irq();
     while (1){
     }
-  /* USER CODE END Error_Handler_Debug */
+    /* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
