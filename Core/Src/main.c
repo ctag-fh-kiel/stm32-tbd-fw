@@ -219,7 +219,7 @@ int main(void)
         for (int i = 0; i < 8; i++){
             adc_vals[i] = data.adc_values[i];
             diffs[i] = abs(adc_vals[i] - adc_values_old[i]);
-            if (diffs[i] > 10){
+            if (diffs[i] > 30){
                 data.encoder = 0x80;
             }
             adc_values_old[i] = data.adc_values[i];
@@ -230,17 +230,19 @@ int main(void)
 
         // wait for last i2c transfer request from rp2040 to complete
         while (i2c_transfer_complete != 1);
+        i2c_transfer_complete = 0;
 
         // grab data for transfer
         memcpy(&t_d_buffer, &data, sizeof(data_t));
         HAL_ADC_Start_DMA(&hadc, (uint32_t*)data.adc_values, 8);
 
         // start listening for i2c transfer
+
         if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
             /* Transfer error in reception process */
             Error_Handler();
         }
-        i2c_transfer_complete = 0;
+
 
         //
     /* USER CODE END WHILE */
