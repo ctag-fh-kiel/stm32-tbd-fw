@@ -34,7 +34,7 @@
 /* USER CODE BEGIN PTD */
 __IO uint32_t Transfer_Direction = 0;
 __IO uint32_t i2c_transfer_complete = 0;
-__IO uint32_t adc_dma_complete = 1;
+__IO uint32_t adc_dma_complete = 0;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -137,6 +137,9 @@ int main(void)
     uint32_t ticks_counter = 0;
     uint32_t encoder_old_count = 0;
     uint32_t encoder_old_count_2 = 0;
+    HAL_Delay(10);
+    // restart adc dma
+    HAL_ADC_Start_DMA(&hadc, (uint32_t*)data.adc_values, 8);
     while (1){
         // get ports A, B, C, and F
         uint16_t port_a_din = GPIOA->IDR;
@@ -230,6 +233,7 @@ int main(void)
 
         // grab data for transfer
         memcpy(&t_d_buffer, &data, sizeof(data_t));
+        HAL_ADC_Start_DMA(&hadc, (uint32_t*)data.adc_values, 8);
 
         // start listening for i2c transfer
         if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
@@ -237,9 +241,6 @@ int main(void)
             Error_Handler();
         }
         i2c_transfer_complete = 0;
-
-        // restart adc dma
-        HAL_ADC_Start_DMA(&hadc, (uint32_t*)data.adc_values, 8);
 
         //
     /* USER CODE END WHILE */
