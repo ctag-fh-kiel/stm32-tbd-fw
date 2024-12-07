@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <string.h>
+#include "endless_pot.h"
 #include <stdlib.h>
 /* USER CODE END Includes */
 
@@ -53,6 +54,7 @@ __IO uint32_t adc_dma_complete = 0;
 static data_t data;
 static data_t t_d_buffer;
 static uint16_t adc_vals[8];
+static EndlessPot_t pots[4];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -134,6 +136,9 @@ int main(void){
     uint32_t ticks_counter = 0;
     uint32_t encoder_old_count = 0;
     uint32_t encoder_old_count_2 = 0;
+    for (int i=0;i<4;i++){
+        endless_pot_init(&pots[i]);
+    }
     HAL_Delay(10);
     // restart adc dma
     HAL_ADC_Start_DMA(&hadc, adc_vals, 8);
@@ -216,21 +221,12 @@ int main(void){
 
         // wait for adc
         while (adc_dma_complete != 1);
-        static uint16_t adc_values_old[8];
-        uint16_t diffs[8];
-        for (int i = 0; i < 8; i++){
-            data.adc_values[i] = adc_vals[i];
-            /*
-            diffs[i] = abs(adc_vals[i] - adc_values_old[i]);
-            if (diffs[i] > 100){
-                data.encoder = 0x80;
-            }
-            adc_values_old[i] = data.adc_values[i];
-            */
+        memcpy(data.adc_values, adc_vals, sizeof(adc_vals));
+        for (int i=0;i<4;i++){
+            endless_pot_update(&pots[i], data.adc_values[i*2], data.adc_values[i*2 + 1]);
+            data.pot_positions[i] = pots[i].angle;
+            data.pot_states[i] = pots[i].state;
         }
-
-        // determine forward / backward rotation and speed from endless pot adc values
-
 
         // wait for last i2c transfer request from rp2040 to complete
         while (i2c_transfer_complete != 1);
@@ -238,7 +234,7 @@ int main(void){
 
         // grab data for transfer
         memcpy(&t_d_buffer, &data, sizeof(data_t));
-        HAL_ADC_Start_DMA(&hadc, adc_vals, 8);
+        HAL_ADC_Start_DMA(&hadc, (uint32_t*)adc_vals, 8);
 
         // start listening for i2c transfer
 
