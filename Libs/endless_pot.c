@@ -2,12 +2,14 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stm32f0xx_hal.h>
 
 #define M_PI_F ((float)M_PI)
 
 void endless_pot_init(EndlessPot_t* pot){
     pot->state = 0;
     pot->angle = 0;
+    pot->last_update = 0;
 }
 
 float fast_atan2f(float y, float x) {
@@ -42,17 +44,25 @@ void endless_pot_update(EndlessPot_t* pot, uint16_t adc_a, uint16_t adc_b){
     // Calculate the difference between the current and previous angle
     int32_t angle_diff = current_angle_fixed - (int16_t)pot->angle;
 
-
     // Apply hysteresis
     if (abs(angle_diff) > ADC_HYSTERESIS){
         pot->angle = (uint16_t)current_angle_fixed;
+        uint32_t current_time = HAL_GetTick();
+        uint32_t time_diff = current_time - pot->last_update;
+        pot->state = 0;
         // Determine rotation direction
+        if (time_diff < 8){
+            pot->state |= 0x08;
+        }else if (time_diff < 16){
+            pot->state |= 0x04;
+        }
         if (angle_diff > 0){
-            pot->state = 0x01;
+            pot->state |= 0x01;
         }
         else{
-            pot->state = 0x02;
+            pot->state |= 0x02;
         }
+        pot->last_update = current_time;
     }else{
         pot->state = 0x00;
     }

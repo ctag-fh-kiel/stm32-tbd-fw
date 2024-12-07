@@ -6,8 +6,9 @@
 #define ADC_HYSTERESIS 250 // Hysteresis value for ADC readings
 
 typedef struct {
-	uint8_t state; // BIT0 forwards, BIT1 backwards, BIT2 slow, BIT3 medium, BIT4 fast, BIT7 error
+	uint8_t state; // BIT0 forwards, BIT1 backwards, BIT2 medium, BIT3 fast, BIT7 error
 	uint16_t angle; // absolute position 0..65535
+	uint32_t last_update; // timestamp of last update
 } EndlessPot_t;
 
 void endless_pot_init(EndlessPot_t* pot);
