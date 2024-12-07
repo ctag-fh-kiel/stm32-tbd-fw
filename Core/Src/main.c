@@ -210,6 +210,17 @@ int main(void)
 
         // wait for adc
         while (adc_dma_complete != 1);
+        static uint16_t adc_values_old[8];
+        uint16_t adc_vals[8];
+        uint16_t diffs[8];
+        for (int i = 0; i < 8; i++){
+            adc_vals[i] = data.adc_values[i];
+            diffs[i] = abs(adc_vals[i] - adc_values_old[i]);
+            if (diffs[i] > 10){
+                data.encoder = 0x80;
+            }
+            adc_values_old[i] = data.adc_values[i];
+        }
 
         // determine forward / backward rotation and speed from endless pot adc values
 
@@ -229,7 +240,6 @@ int main(void)
 
         // restart adc dma
         HAL_ADC_Start_DMA(&hadc, (uint32_t*)data.adc_values, 8);
-
 
         //
     /* USER CODE END WHILE */
