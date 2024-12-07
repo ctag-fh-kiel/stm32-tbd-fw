@@ -50,8 +50,9 @@ __IO uint32_t adc_dma_complete = 0;
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-data_t data;
-data_t t_d_buffer;
+static data_t data;
+static data_t t_d_buffer;
+static uint16_t adc_vals[8];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -139,7 +140,7 @@ int main(void)
     uint32_t encoder_old_count_2 = 0;
     HAL_Delay(10);
     // restart adc dma
-    HAL_ADC_Start_DMA(&hadc, (uint32_t*)data.adc_values, 8);
+    HAL_ADC_Start_DMA(&hadc, adc_vals, 8);
     while (1){
         // get ports A, B, C, and F
         uint16_t port_a_din = GPIOA->IDR;
@@ -214,15 +215,16 @@ int main(void)
         // wait for adc
         while (adc_dma_complete != 1);
         static uint16_t adc_values_old[8];
-        uint16_t adc_vals[8];
         uint16_t diffs[8];
         for (int i = 0; i < 8; i++){
-            adc_vals[i] = data.adc_values[i];
+            data.adc_values[i] = adc_vals[i];
+            /*
             diffs[i] = abs(adc_vals[i] - adc_values_old[i]);
-            if (diffs[i] > 30){
+            if (diffs[i] > 100){
                 data.encoder = 0x80;
             }
             adc_values_old[i] = data.adc_values[i];
+            */
         }
 
         // determine forward / backward rotation and speed from endless pot adc values
@@ -234,7 +236,7 @@ int main(void)
 
         // grab data for transfer
         memcpy(&t_d_buffer, &data, sizeof(data_t));
-        HAL_ADC_Start_DMA(&hadc, (uint32_t*)data.adc_values, 8);
+        HAL_ADC_Start_DMA(&hadc, adc_vals, 8);
 
         // start listening for i2c transfer
 
@@ -337,7 +339,7 @@ void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef* I2cHandle){
   *   TransferDirection: Master request Transfer Direction (Write/Read), value of @ref I2C_XferOptions_definition
   *   AddrMatchCode: Address Match Code
   * @retval None
-  */
+ui  */
 void HAL_I2C_AddrCallback(I2C_HandleTypeDef* hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode){
     Transfer_Direction = TransferDirection;
     if (Transfer_Direction != 0){
