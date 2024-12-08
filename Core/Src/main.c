@@ -51,10 +51,12 @@ __IO uint32_t adc_dma_complete = 0;
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-static data_t data;
-static data_t t_d_buffer;
-static uint16_t adc_vals[8];
-static EndlessPot_t pots[4];
+static ui_data_t data; // active data
+static ui_data_t t_d_buffer; // transfer data buffer
+static uint16_t adc_vals[8]; // adc values, dma buffer
+static endless_pot_t pots[4]; // endless pots states
+static uint32_t d_btn_timestamps[16]; // timestamps for buttons
+static uint32_t f_btn_timestamps[4]; // timestamps for buttons
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -82,8 +84,8 @@ int main(void){
     HAL_Init();
 
     /* USER CODE BEGIN Init */
-    memset(&data, 0, sizeof(data_t));
-    memset(&t_d_buffer, 0, sizeof(data_t));
+    memset(&data, 0, sizeof(ui_data_t));
+    memset(&t_d_buffer, 0, sizeof(ui_data_t));
 
     /* USER CODE END Init */
 
@@ -168,6 +170,22 @@ int main(void){
             (port_b_din & (1 << 4)) << (11);
         data.d_btns = ~data.d_btns;
 
+        // check if data buttons are long pressed
+        for (int i=0;i<16;i++){
+            if (data.d_btns & (1 << i)){
+                if (d_btn_timestamps[i] == 0){
+                    d_btn_timestamps[i] = HAL_GetTick();
+                }
+                else if (HAL_GetTick() - d_btn_timestamps[i] > BTN_LONG_PRESS){
+                    data.d_btns_long_press |= (1 << i);
+                }
+            }
+            else{
+                d_btn_timestamps[i] = 0;
+                data.d_btns_long_press &= ~(1 << i);
+            }
+        }
+
         // function buttons are (PB8,PB13,PF7,PB9)
         data.f_btns = (port_b_din & (1 << 8)) >> (8 - 0) | (port_b_din & (1 << 13)) >> (13 - 1) | (port_f_din & (1 <<
                 7)) >>
@@ -175,10 +193,26 @@ int main(void){
         data.f_btns = ~data.f_btns;
         data.f_btns = data.f_btns & 0x0F;
 
+        // check if function buttons are long pressed
+        for (int i=0;i<4;i++){
+            if (data.f_btns & (1 << i)){
+                if (f_btn_timestamps[i] == 0){
+                    f_btn_timestamps[i] = HAL_GetTick();
+                }
+                else if (HAL_GetTick() - f_btn_timestamps[i] > BTN_LONG_PRESS){
+                    data.f_btns_long_press |= (1 << i);
+                }
+            }
+            else{
+                f_btn_timestamps[i] = 0;
+                data.f_btns_long_press &= ~(1 << i);
+            }
+        }
+
         // encoder positions
         data.encoder_counter = __HAL_TIM_GET_COUNTER(&htim1);
         data.encoder_counter >>= 1;
-        data.encoder_counter_uint16 = (int16_t)data.encoder_counter;
+        data.encoder_absolute_pos = data.encoder_counter % ENCODER_WHOLE_ROTATION;
         // get velocity every 100ms
         uint32_t ticks = HAL_GetTick();
         if (ticks - ticks_counter >= 100){
@@ -229,7 +263,7 @@ int main(void){
         data.systicks = HAL_GetTick();
 
         // grab data for transfer
-        memcpy(&t_d_buffer, &data, sizeof(data_t));
+        memcpy(&t_d_buffer, &data, sizeof(ui_data_t));
         HAL_ADC_Start_DMA(&hadc, (uint32_t*)adc_vals, 8);
 
         // start listening for i2c transfer
@@ -335,7 +369,7 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef* hi2c, uint8_t TransferDirection, ui
         /*##- Start the transmission process #####################################*/
         /* While the I2C in reception process, user can transmit data through
            "aTxBuffer" buffer */
-        if (HAL_I2C_Slave_Seq_Transmit_IT(&hi2c1, (uint8_t*)&t_d_buffer, sizeof(data_t), I2C_FIRST_AND_LAST_FRAME) !=
+        if (HAL_I2C_Slave_Seq_Transmit_IT(&hi2c1, (uint8_t*)&t_d_buffer, sizeof(ui_data_t), I2C_FIRST_AND_LAST_FRAME) !=
             HAL_OK){
             /* Transfer error in transmission process */
             Error_Handler();

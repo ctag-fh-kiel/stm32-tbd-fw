@@ -6,7 +6,7 @@
 
 #define M_PI_F ((float)M_PI)
 
-void endless_pot_init(EndlessPot_t* pot){
+void endless_pot_init(endless_pot_t* pot){
     pot->state = 0;
     pot->angle = 0;
     pot->last_update = 0;
@@ -33,7 +33,7 @@ float fast_atan2f(float y, float x) {
     return atan;
 }
 
-void endless_pot_update(EndlessPot_t* pot, uint16_t adc_a, uint16_t adc_b){
+void endless_pot_update(endless_pot_t* pot, uint16_t adc_a, uint16_t adc_b){
     float a = (adc_a - 2047.5f) / 2047.5f;
     float b = (adc_b - 2047.5f) / 2047.5f;
     //float current_angle = atan2f(b, a);

@@ -36,19 +36,23 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+#define BTN_LONG_PRESS 3000 // 3s
+#define ENCODER_WHOLE_ROTATION 30 // 30 steps per whole rotation
+//total size of data_t is 48 bytes, transfer speed on i2c with 400kHz is 400kbps/8 = 50kB/s, so 48 bytes will be transferred in 0.96ms
 typedef struct{
     uint16_t pot_adc_values[8]; // raw adc values
     uint16_t pot_positions[4]; // absolute position 0..65535
     uint8_t pot_states[4]; // BIT0: fwd, BIT1: bwd, BIT2: medium, BIT3: fast, BIT7: error
     uint16_t d_btns; // BIT0-15: D1-D16
+    uint16_t d_btns_long_press; // BIT0-15: D1-D16
     uint8_t f_btns; // BIT0: F1, BIT1: F2, BIT2: F3, BIT3: F4
+    uint8_t f_btns_long_press; // BIT0: F1, BIT1: F2, BIT2: F3, BIT3: F4
     uint8_t encoder_state; // BIT0: encoder button, BIT1: forward, BIT2: backward, BIT3: medium, BIT4: fast
     uint32_t encoder_counter; // 32 bit counter
-    int16_t encoder_counter_uint16; // 16 bit counter
+    uint8_t encoder_absolute_pos; // depending on ENCODER_WHOLE_ROTATION
     uint8_t encoder_speed; // velocity of encoder
     uint32_t systicks; // timestamp
-} data_t;
-
+} ui_data_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
