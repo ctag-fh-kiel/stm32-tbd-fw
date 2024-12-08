@@ -176,54 +176,47 @@ int main(void){
         data.f_btns = data.f_btns & 0x0F;
 
         // encoder positions
-        data.counter = __HAL_TIM_GET_COUNTER(&htim1);
-        data.counter >>= 1;
-        data.count = (int16_t)data.counter;
+        data.encoder_counter = __HAL_TIM_GET_COUNTER(&htim1);
+        data.encoder_counter >>= 1;
+        data.encoder_counter_uint16 = (int16_t)data.encoder_counter;
         // get velocity every 100ms
         uint32_t ticks = HAL_GetTick();
         if (ticks - ticks_counter >= 100){
-            data.speed = data.counter > encoder_old_count
-                             ? data.counter - encoder_old_count
-                             : encoder_old_count - data.counter;
-            encoder_old_count = data.counter;
+            data.encoder_speed = data.encoder_counter > encoder_old_count
+                             ? data.encoder_counter - encoder_old_count
+                             : encoder_old_count - data.encoder_counter;
+            encoder_old_count = data.encoder_counter;
             ticks_counter = ticks;
         }
 
         // encoder button is PC13, assign to btns bit 0
-        data.encoder = (port_c_din & 0x2000) >> 13;
-        data.encoder = ~data.encoder;
-        data.encoder = data.encoder & 0x01;
+        data.encoder_state = (port_c_din & 0x2000) >> 13;
+        data.encoder_state = ~data.encoder_state;
+        data.encoder_state = data.encoder_state & 0x01;
         // rotating forward or backward, slow, med or fast?
-        if (data.counter > encoder_old_count_2){
+        if (data.encoder_counter > encoder_old_count_2){
             // forward
-            data.encoder |= 0x02;
+            data.encoder_state |= 0x02;
         }
-        else if (data.counter < encoder_old_count_2){
+        else if (data.encoder_counter < encoder_old_count_2){
             // backward
-            data.encoder |= 0x04;
+            data.encoder_state |= 0x04;
         }
-        encoder_old_count_2 = data.counter;
-        if (data.speed > 20){
+        encoder_old_count_2 = data.encoder_counter;
+        if (data.encoder_speed > 20){
             // fast spinning
-            data.encoder |= 0x20;
+            data.encoder_state |= 0x10;
         }
-        else if (data.speed > 10){
+        else if (data.encoder_speed > 10){
             // medium spinning
-            data.encoder |= 0x10;
+            data.encoder_state |= 0x08;
         }
-        else{
-            // slow spinning
-            data.encoder |= 0x08;
-        }
-
-        // get systicks as timestamp for package
-        data.systicks = HAL_GetTick();
 
         // wait for adc
         while (adc_dma_complete != 1);
-        memcpy(data.adc_values, adc_vals, sizeof(adc_vals));
+        memcpy(data.pot_adc_values, adc_vals, sizeof(adc_vals));
         for (int i=0;i<4;i++){
-            endless_pot_update(&pots[i], data.adc_values[i*2], data.adc_values[i*2 + 1]);
+            endless_pot_update(&pots[i], data.pot_adc_values[i*2], data.pot_adc_values[i*2 + 1]);
             data.pot_positions[i] = pots[i].angle;
             data.pot_states[i] = pots[i].state;
         }
@@ -231,6 +224,9 @@ int main(void){
         // wait for last i2c transfer request from rp2040 to complete
         while (i2c_transfer_complete != 1);
         i2c_transfer_complete = 0;
+
+        // get systicks as timestamp for package
+        data.systicks = HAL_GetTick();
 
         // grab data for transfer
         memcpy(&t_d_buffer, &data, sizeof(data_t));

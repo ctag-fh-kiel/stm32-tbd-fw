@@ -37,16 +37,16 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 typedef struct{
-    uint16_t adc_values[8];
-    uint16_t pot_positions[4];
-    uint8_t pot_states[4];
-    uint16_t d_btns;
-    uint8_t f_btns;
-    uint8_t encoder;
-    uint32_t counter;
-    int16_t count;
-    uint8_t speed;
-    uint32_t systicks;
+    uint16_t pot_adc_values[8]; // raw adc values
+    uint16_t pot_positions[4]; // absolute position 0..65535
+    uint8_t pot_states[4]; // BIT0: fwd, BIT1: bwd, BIT2: medium, BIT3: fast, BIT7: error
+    uint16_t d_btns; // BIT0-15: D1-D16
+    uint8_t f_btns; // BIT0: F1, BIT1: F2, BIT2: F3, BIT3: F4
+    uint8_t encoder_state; // BIT0: encoder button, BIT1: forward, BIT2: backward, BIT3: medium, BIT4: fast
+    uint32_t encoder_counter; // 32 bit counter
+    int16_t encoder_counter_uint16; // 16 bit counter
+    uint8_t encoder_speed; // velocity of encoder
+    uint32_t systicks; // timestamp
 } data_t;
 
 /* USER CODE END ET */
