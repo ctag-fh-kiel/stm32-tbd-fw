@@ -140,6 +140,8 @@ int main(void)
     uint32_t ticks_counter = 0;
     uint32_t encoder_old_count = 0;
     uint32_t encoder_old_count_2 = 0;
+    uint8_t encoder_pre_state = 0;
+    uint32_t encoder_button_timestamp = 0;
     for (int i=0;i<4;i++){
         endless_pot_init(&pots[i]);
     }
@@ -229,24 +231,31 @@ int main(void)
         data.encoder_state = (port_c_din & 0x2000) >> 13;
         data.encoder_state = ~data.encoder_state;
         data.encoder_state = data.encoder_state & 0x01;
+        if (data.encoder_state == 1 && !(encoder_pre_state & 0x01)){
+            encoder_button_timestamp = HAL_GetTick();
+        }
+        if (data.encoder_state == 1 && (HAL_GetTick() - encoder_button_timestamp) > BTN_LONG_PRESS){
+            data.encoder_state |= 0x02;
+        }
         // rotating forward or backward, slow, med or fast?
         if (data.encoder_counter > encoder_old_count_2){
             // forward
-            data.encoder_state |= 0x02;
+            data.encoder_state |= 0x04;
         }
         else if (data.encoder_counter < encoder_old_count_2){
             // backward
-            data.encoder_state |= 0x04;
+            data.encoder_state |= 0x08;
         }
         encoder_old_count_2 = data.encoder_counter;
         if (data.encoder_speed > 20){
             // fast spinning
-            data.encoder_state |= 0x10;
+            data.encoder_state |= 0x20;
         }
         else if (data.encoder_speed > 10){
             // medium spinning
-            data.encoder_state |= 0x08;
+            data.encoder_state |= 0x10;
         }
+        encoder_pre_state = data.encoder_state;
 
         // wait for adc
         while (adc_dma_complete != 1);

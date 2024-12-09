@@ -47,7 +47,7 @@ typedef struct{
     uint16_t d_btns_long_press; // BIT0-15: D1-D16
     uint8_t f_btns; // BIT0: F1, BIT1: F2, BIT2: F3, BIT3: F4
     uint8_t f_btns_long_press; // BIT0: F1, BIT1: F2, BIT2: F3, BIT3: F4
-    uint8_t encoder_state; // BIT0: encoder button, BIT1: forward, BIT2: backward, BIT3: medium, BIT4: fast
+    uint8_t encoder_state; // BIT0: encoder button, BIT1: ,BIT2: forward, BIT3: backward, BIT4: medium, BIT5: fast
     uint32_t encoder_counter; // 32 bit counter
     uint8_t encoder_absolute_pos; // depending on ENCODER_WHOLE_ROTATION
     uint8_t encoder_speed; // velocity of encoder
