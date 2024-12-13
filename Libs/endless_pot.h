@@ -6,7 +6,7 @@
 #define ENDLESS_POT_RESOLUTION 10 // Resolution of the endless potentiometer in bits
 #define ADC_HYSTERESIS (1 << (16 - ENDLESS_POT_RESOLUTION)) // Hysteresis value for ADC readings
 #define RUNNING_AVERAGE_SIZE (1 << 2) // Size of the running average filter, power of twos
-#define CONFIDENCE_THRESHOLD 2 // Confidence threshold for the potentiometer
+#define CONFIDENCE_THRESHOLD 3 // Confidence threshold for the potentiometer
 
 typedef struct {
 	uint8_t state; // BIT0 forwards, BIT1 backwards, BIT2 medium, BIT3 fast, BIT7 error
