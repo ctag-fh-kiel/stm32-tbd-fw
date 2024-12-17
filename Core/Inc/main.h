@@ -36,7 +36,7 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-#define BTN_LONG_PRESS 3000 // 3s
+#define BTN_LONG_PRESS 4000 // 3s
 #define ENCODER_WHOLE_ROTATION 30 // 30 steps per whole rotation
 //total size of data_t is 48 bytes, transfer speed on i2c with 400kHz is 400kbps/8 = 50kB/s, so 48 bytes will be transferred in 0.96ms
 typedef struct{

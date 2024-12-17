@@ -38,10 +38,12 @@ float fast_atan2f(float y, float x) {
 
 void endless_pot_update(endless_pot_t* pot, uint16_t adc_a, uint16_t adc_b){
     // filter the ADC readings
+    /*
     pot->mean_a_N = pot->mean_a_N + adc_a - (pot->mean_a_N / RUNNING_AVERAGE_SIZE);
     pot->mean_b_N = pot->mean_b_N + adc_b - (pot->mean_b_N / RUNNING_AVERAGE_SIZE);
     adc_a = pot->mean_a_N / RUNNING_AVERAGE_SIZE;
     adc_b = pot->mean_b_N / RUNNING_AVERAGE_SIZE;
+    */
 
     // normalize the ADC readings
     float a = (adc_a - 2047.5f) / 2047.5f;
