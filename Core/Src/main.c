@@ -122,12 +122,12 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_ADC_Init();
-  MX_I2C1_Init();
+  MX_I2C2_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
     //HAL_TIM_Encoder_Start_IT(&htim1, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-    if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
+    if (HAL_I2C_EnableListen_IT(&hi2c2) != HAL_OK){
         /* Transfer error in reception process */
         Error_Handler();
     }
@@ -279,7 +279,7 @@ int main(void)
 
         // start listening for i2c transfer
 
-        if (HAL_I2C_EnableListen_IT(&hi2c1) != HAL_OK){
+        if (HAL_I2C_EnableListen_IT(&hi2c2) != HAL_OK){
             /* Transfer error in reception process */
             Error_Handler();
         }
@@ -301,7 +301,6 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -326,12 +325,6 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
-  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
   }
@@ -384,7 +377,7 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef* hi2c, uint8_t TransferDirection, ui
         /*##- Start the transmission process #####################################*/
         /* While the I2C in reception process, user can transmit data through
            "aTxBuffer" buffer */
-        if (HAL_I2C_Slave_Seq_Transmit_IT(&hi2c1, (uint8_t*)&t_d_buffer, sizeof(ui_data_t), I2C_FIRST_AND_LAST_FRAME) !=
+        if (HAL_I2C_Slave_Seq_Transmit_IT(&hi2c2, (uint8_t*)&t_d_buffer, sizeof(ui_data_t), I2C_FIRST_AND_LAST_FRAME) !=
             HAL_OK){
             /* Transfer error in transmission process */
             Error_Handler();
