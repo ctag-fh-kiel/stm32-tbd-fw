@@ -26,7 +26,6 @@ target_sources(stm32cubemx INTERFACE
     ../../Core/Src/adc.c
     ../../Core/Src/dma.c
     ../../Core/Src/i2c.c
-    ../../Core/Src/tim.c
     ../../Core/Src/stm32f0xx_it.c
     ../../Core/Src/stm32f0xx_hal_msp.c
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_adc.c
@@ -44,8 +43,6 @@ target_sources(stm32cubemx INTERFACE
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_flash.c
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_flash_ex.c
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_exti.c
-    ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim.c
-    ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim_ex.c
     ../../Core/Src/system_stm32f0xx.c
     ../../Core/Src/sysmem.c
     ../../Core/Src/syscalls.c

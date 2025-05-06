@@ -21,7 +21,6 @@
 #include "adc.h"
 #include "dma.h"
 #include "i2c.h"
-#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -123,10 +122,9 @@ int main(void)
   MX_DMA_Init();
   MX_ADC_Init();
   MX_I2C2_Init();
-  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
     //HAL_TIM_Encoder_Start_IT(&htim1, TIM_CHANNEL_ALL);
-    HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
+    //HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
     if (HAL_I2C_EnableListen_IT(&hi2c2) != HAL_OK){
         /* Transfer error in reception process */
         Error_Handler();
@@ -147,7 +145,7 @@ int main(void)
     }
     HAL_Delay(10);
     // restart adc dma
-    HAL_ADC_Start_DMA(&hadc, adc_vals, 8);
+    HAL_ADC_Start_DMA(&hadc, (uint32_t*) adc_vals, 8);
     while (1){
         // get ports A, B, C, and F
         uint16_t port_a_din = GPIOA->IDR;
@@ -213,6 +211,7 @@ int main(void)
             }
         }
 
+        /*
         // encoder positions
         data.encoder_counter = __HAL_TIM_GET_COUNTER(&htim1);
         data.encoder_counter >>= 1;
@@ -256,6 +255,7 @@ int main(void)
             data.encoder_state |= 0x10;
         }
         encoder_pre_state = data.encoder_state;
+        */
 
         // wait for adc
         while (adc_dma_complete != 1);

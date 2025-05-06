@@ -31,6 +31,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_C_FLAGS_DEBUG "-g -Og -DDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Og -DDEBUG")
 
+# disable warnings
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-variable -Wno-unused-parameter")
+
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
 # Enable CMake support for ASM and C languages

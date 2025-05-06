@@ -67,11 +67,11 @@ void endless_pot_update(endless_pot_t* pot, uint16_t adc_a, uint16_t adc_b){
         uint32_t time_diff = current_time - pot->last_update;
         pot->state = 0;
         // Determine angle speed is angle per time
-/*
+        /*
         if (mean_ad > 7500){
             pot->state |= 0x08;
         }
-        /*else if (mean_ad > 200){
+        else if (mean_ad > 200){
             pot->state |= 0x04;
         }
         */
