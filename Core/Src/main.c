@@ -55,7 +55,8 @@ static ui_data_t t_d_buffer; // transfer data buffer
 static uint16_t adc_vals[8]; // adc values, dma buffer
 static endless_pot_t pots[4]; // endless pots states
 static uint32_t d_btn_timestamps[16]; // timestamps for buttons
-static uint32_t f_btn_timestamps[4]; // timestamps for buttons
+static uint32_t f_btn_timestamps[5]; // timestamps for buttons
+static uint32_t mcl_btn_timestamps[13]; // timestamps for buttons
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -151,25 +152,28 @@ int main(void)
         uint16_t port_a_din = GPIOA->IDR;
         uint16_t port_b_din = GPIOB->IDR;
         uint16_t port_c_din = GPIOC->IDR;
+        uint16_t port_d_din = GPIOD->IDR;
         uint16_t port_f_din = GPIOF->IDR;
 
-        // data button 0-15 mapping is (PB12,PB11,PB1,PB14,PA11,PF6,PB3,PB5,BP10,PB2,PB0,PB15,PA10,PA12,PA15,PB4)
-        data.d_btns = (port_b_din & (1 << 12)) >> (12 - 0) |
-            (port_b_din & (1 << 11)) >> (11 - 1) |
-            (port_b_din & (1 << 1)) << (1) |
-            (port_b_din & (1 << 14)) >> (14 - 3) |
-            (port_a_din & (1 << 11)) >> (11 - 4) |
-            (port_f_din & (1 << 6)) >> (6 - 5) |
-            (port_b_din & (1 << 3)) << (3) |
-            (port_b_din & (1 << 5)) << (2) |
-            (port_b_din & (1 << 10)) >> (10 - 8) |
-            (port_b_din & (1 << 2)) << (7) |
-            (port_b_din & (1 << 0)) << (10) |
-            (port_b_din & (1 << 15)) >> (15 - 11) |
-            (port_a_din & (1 << 10)) << (2) |
-            (port_a_din & (1 << 12)) << (1) |
-            (port_a_din & (1 << 15)) >> (15 - 14) |
-            (port_b_din & (1 << 4)) << (11);
+        // data button 0-15 mapping is (PF0, PC14, PB9, PB8, PB6, PC12, PD2, PB3, PF1, PC15, PC13, PB7, PB5, PB4, PC11, PC10)
+        data.d_btns = 0;
+        data.d_btns |= (port_f_din & (1 << 0)) ? 0x01 : 0; // PF0
+        data.d_btns |= (port_c_din & (1 << 14)) ? 0x02 : 0; // PC14
+        data.d_btns |= (port_b_din & (1 << 9)) ? 0x04 : 0; // PB9
+        data.d_btns |= (port_b_din & (1 << 8)) ? 0x08 : 0; // PB8
+        data.d_btns |= (port_b_din & (1 << 6)) ? 0x10 : 0; // PB6
+        data.d_btns |= (port_c_din & (1 << 12)) ? 0x20 : 0; // PC12
+        data.d_btns |= (port_d_din & (1 << 2)) ? 0x40 : 0; // PD2
+        data.d_btns |= (port_b_din & (1 << 3)) ? 0x80 : 0; // PB3
+        data.d_btns |= (port_f_din & (1 << 1)) ? 0x100 : 0; // PF1
+        data.d_btns |= (port_c_din & (1 << 15)) ? 0x200 : 0; // PC15
+        data.d_btns |= (port_c_din & (1 << 13)) ? 0x400 : 0; // PC13
+        data.d_btns |= (port_b_din & (1 << 7)) ? 0x800 : 0; // PB7
+        data.d_btns |= (port_b_din & (1 << 5)) ? 0x1000 : 0; // PB5
+        data.d_btns |= (port_b_din & (1 << 4)) ? 0x2000 : 0; // PB4
+        data.d_btns |= (port_c_din & (1 << 11)) ? 0x4000 : 0; // PC11
+        data.d_btns |= (port_c_din & (1 << 10)) ? 0x8000 : 0; // PC10
+        // invert the buttons
         data.d_btns = ~data.d_btns;
 
         // check if data buttons are long pressed
@@ -188,15 +192,18 @@ int main(void)
             }
         }
 
-        // function buttons are (PB8,PB13,PF7,PB9)
-        data.f_btns = (port_b_din & (1 << 8)) >> (8 - 0) | (port_b_din & (1 << 13)) >> (13 - 1) | (port_f_din & (1 <<
-                7)) >>
-            (7 - 2) | (port_b_din & (1 << 9)) >> (9 - 3);
+        // function buttons are (PB0, PC5, PB2, PB1, PB12)
+        data.f_btns = 0;
+        data.f_btns |= (port_b_din & (1 << 0)) ? 0x01 : 0; // PB0
+        data.f_btns |= (port_c_din & (1 << 5)) ? 0x02 : 0; // PC5
+        data.f_btns |= (port_b_din & (1 << 2)) ? 0x04 : 0; // PB2
+        data.f_btns |= (port_b_din & (1 << 1)) ? 0x08 : 0; // PB1
+        data.f_btns |= (port_b_din & (1 << 12)) ? 0x10 : 0; // PB12
         data.f_btns = ~data.f_btns;
-        data.f_btns = data.f_btns & 0x0F;
+        data.f_btns = data.f_btns & 0x1F; // only 5 bits
 
         // check if function buttons are long pressed
-        for (int i=0;i<4;i++){
+        for (int i=0;i<5;i++){
             if (data.f_btns & (1 << i)){
                 if (f_btn_timestamps[i] == 0){
                     f_btn_timestamps[i] = HAL_GetTick();
@@ -208,6 +215,39 @@ int main(void)
             else{
                 f_btn_timestamps[i] = 0;
                 data.f_btns_long_press &= ~(1 << i);
+            }
+        }
+
+        // mcl buttons are (PC0, PC1, PC2, PB14, PB13, PA12, PA11, PF6, PF7, PC3, PF4, PF5, PC4)
+        data.mcl_btns = 0;
+        data.mcl_btns |= (port_c_din & (1 << 0)) ? 0x01 : 0; // PC0
+        data.mcl_btns |= (port_c_din & (1 << 1)) ? 0x02 : 0; // PC1
+        data.mcl_btns |= (port_c_din & (1 << 2)) ? 0x04 : 0; // PC2
+        data.mcl_btns |= (port_b_din & (1 << 14)) ? 0x08 : 0; // PB14
+        data.mcl_btns |= (port_b_din & (1 << 13)) ? 0x10 : 0; // PB13
+        data.mcl_btns |= (port_a_din & (1 << 12)) ? 0x20 : 0; // PA12
+        data.mcl_btns |= (port_a_din & (1 << 11)) ? 0x40 : 0; // PA11
+        data.mcl_btns |= (port_f_din & (1 << 6)) ? 0x80 : 0; // PF6
+        data.mcl_btns |= (port_f_din & (1 << 7)) ? 0x100 : 0; // PF7
+        data.mcl_btns |= (port_c_din & (1 << 3)) ? 0x200 : 0; // PC3
+        data.mcl_btns |= (port_f_din & (1 << 4)) ? 0x400 : 0; // PF4
+        data.mcl_btns |= (port_f_din & (1 << 5)) ? 0x800 : 0; // PF5
+        data.mcl_btns |= (port_c_din & (1 << 4)) ? 0x1000 : 0; // PC4
+        data.mcl_btns = ~data.mcl_btns;
+        data.mcl_btns = data.mcl_btns & 0x1FFF; // only 13 bits
+
+        for (int i=0;i<13;i++){
+            if (data.mcl_btns & (1 << i)){
+                if (mcl_btn_timestamps[i] == 0){
+                    mcl_btn_timestamps[i] = HAL_GetTick();
+                }
+                else if (HAL_GetTick() - mcl_btn_timestamps[i] > BTN_LONG_PRESS){
+                    data.mcl_btns_long_press |= (1 << i);
+                }
+            }
+            else{
+                mcl_btn_timestamps[i] = 0;
+                data.mcl_btns_long_press &= ~(1 << i);
             }
         }
 
@@ -263,7 +303,12 @@ int main(void)
         for (int i=0;i<4;i++){
             endless_pot_update(&pots[i], data.pot_adc_values[i*2], data.pot_adc_values[i*2 + 1]);
             data.pot_positions[i] = pots[i].angle >> (16 - ENDLESS_POT_RESOLUTION);
+            if (i != 0) data.pot_positions[i] = 1023 - data.pot_positions[i]; // all except first inverted
             data.pot_states[i] = pots[i].state;
+            if (i == 0){
+                // swap first and second bit of pot state as movement inverted
+                data.pot_states[i] = (data.pot_states[i] & 0xFFFFFFFC) | ((data.pot_states[i] & 0x02) >> 1) | ((data.pot_states[i] & 0x01) << 1);
+            }
         }
 
         // wait for last i2c transfer request from rp2040 to complete
