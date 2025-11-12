@@ -157,24 +157,24 @@ int main(void)
         uint16_t port_d_din = GPIOD->IDR;
         uint16_t port_f_din = GPIOF->IDR;
 
-        // data button 0-15 mapping is (PF0, PC14, PB9, PB8, PB6, PC12, PD2, PB3, PF1, PC15, PC13, PB7, PB5, PB4, PC11, PC10)
+        // data button 0-15 mapping is (PC14, PB9, PB5, PB6, PC9, PB14, PB15, PC6, PC15, PC13, PB8, PC12, PC11, PC10, PA15, PF7)
         data.d_btns = 0;
-        data.d_btns |= (port_f_din & (1 << 0)) ? 0x01 : 0; // PF0
-        data.d_btns |= (port_c_din & (1 << 14)) ? 0x02 : 0; // PC14
-        data.d_btns |= (port_b_din & (1 << 9)) ? 0x04 : 0; // PB9
-        data.d_btns |= (port_b_din & (1 << 8)) ? 0x08 : 0; // PB8
-        data.d_btns |= (port_b_din & (1 << 6)) ? 0x10 : 0; // PB6
-        data.d_btns |= (port_c_din & (1 << 12)) ? 0x20 : 0; // PC12
-        data.d_btns |= (port_d_din & (1 << 2)) ? 0x40 : 0; // PD2
-        data.d_btns |= (port_b_din & (1 << 3)) ? 0x80 : 0; // PB3
-        data.d_btns |= (port_f_din & (1 << 1)) ? 0x100 : 0; // PF1
-        data.d_btns |= (port_c_din & (1 << 15)) ? 0x200 : 0; // PC15
-        data.d_btns |= (port_c_din & (1 << 13)) ? 0x400 : 0; // PC13
-        data.d_btns |= (port_b_din & (1 << 7)) ? 0x800 : 0; // PB7
-        data.d_btns |= (port_b_din & (1 << 5)) ? 0x1000 : 0; // PB5
-        data.d_btns |= (port_b_din & (1 << 4)) ? 0x2000 : 0; // PB4
-        data.d_btns |= (port_c_din & (1 << 11)) ? 0x4000 : 0; // PC11
-        data.d_btns |= (port_c_din & (1 << 10)) ? 0x8000 : 0; // PC10
+        data.d_btns |= (port_c_din & (1 << 14)) ? 0x0001 : 0; // PC14 -> bit 0
+        data.d_btns |= (port_b_din & (1 << 9))  ? 0x0002 : 0; // PB9  -> bit 1
+        data.d_btns |= (port_b_din & (1 << 5))  ? 0x0004 : 0; // PB5  -> bit 2
+        data.d_btns |= (port_b_din & (1 << 6))  ? 0x0008 : 0; // PB6  -> bit 3
+        data.d_btns |= (port_c_din & (1 << 9))  ? 0x0010 : 0; // PC9  -> bit 4
+        data.d_btns |= (port_b_din & (1 << 14)) ? 0x0020 : 0; // PB14 -> bit 5
+        data.d_btns |= (port_b_din & (1 << 15)) ? 0x0040 : 0; // PB15 -> bit 6
+        data.d_btns |= (port_c_din & (1 << 6))  ? 0x0080 : 0; // PC6  -> bit 7
+        data.d_btns |= (port_c_din & (1 << 15)) ? 0x0100 : 0; // PC15 -> bit 8
+        data.d_btns |= (port_c_din & (1 << 13)) ? 0x0200 : 0; // PC13 -> bit 9
+        data.d_btns |= (port_b_din & (1 << 8))  ? 0x0400 : 0; // PB8  -> bit 10
+        data.d_btns |= (port_c_din & (1 << 12)) ? 0x0800 : 0; // PC12 -> bit 11
+        data.d_btns |= (port_c_din & (1 << 11)) ? 0x1000 : 0; // PC11 -> bit 12
+        data.d_btns |= (port_c_din & (1 << 10)) ? 0x2000 : 0; // PC10 -> bit 13
+        data.d_btns |= (port_a_din & (1 << 15)) ? 0x4000 : 0; // PA15 -> bit 14
+        data.d_btns |= (port_f_din & (1 << 7))  ? 0x8000 : 0; // PF7  -> bit 15
         // invert the buttons
         data.d_btns = ~data.d_btns;
 
@@ -194,18 +194,15 @@ int main(void)
             }
         }
 
-        // function buttons are (PB0, PC5, PB2, PB1, PB12)
+        // function buttons are (PC5, PB0)
         data.f_btns = 0;
-        data.f_btns |= (port_b_din & (1 << 0)) ? 0x01 : 0; // PB0
-        data.f_btns |= (port_c_din & (1 << 5)) ? 0x02 : 0; // PC5
-        data.f_btns |= (port_b_din & (1 << 2)) ? 0x04 : 0; // PB2
-        data.f_btns |= (port_b_din & (1 << 1)) ? 0x08 : 0; // PB1
-        data.f_btns |= (port_b_din & (1 << 12)) ? 0x10 : 0; // PB12
+        data.f_btns |= (port_c_din & (1 << 5)) ? 0x01 : 0; // PC5
+        data.f_btns |= (port_b_din & (1 << 0)) ? 0x02 : 0; // PB0
         data.f_btns = ~data.f_btns;
-        data.f_btns = data.f_btns & 0x1F; // only 5 bits
+        data.f_btns = data.f_btns & 0x02; // only 2 bits
 
         // check if function buttons are long pressed
-        for (int i=0;i<5;i++){
+        for (int i=0;i<2;i++){
             if (data.f_btns & (1 << i)){
                 if (f_btn_timestamps[i] == 0){
                     f_btn_timestamps[i] = HAL_GetTick();
@@ -220,25 +217,24 @@ int main(void)
             }
         }
 
-        // mcl buttons are (PC0, PC1, PC2, PB14, PB13, PA12, PA11, PF6, PF7, PC3, PF4, PF5, PC4)
+        // mcl buttons are (0: MCL_LEFT PF0, 1: MCL_DOWN PF1, 2: MCL_RIGHT PC0, 3: MCL_UP PB3, 4: MCL_A PA11, 5: MCL_B PA10, 6: MCL_X PC8, 7: MCL_Y PC7, 8: MCL_P PB13, 9: MCL_R PB12, 10: MCL_S1 PB1, 11: MCL_S2 PB2)
         data.mcl_btns = 0;
-        data.mcl_btns |= (port_c_din & (1 << 0)) ? 0x01 : 0; // PC0
-        data.mcl_btns |= (port_c_din & (1 << 1)) ? 0x02 : 0; // PC1
-        data.mcl_btns |= (port_c_din & (1 << 2)) ? 0x04 : 0; // PC2
-        data.mcl_btns |= (port_b_din & (1 << 14)) ? 0x08 : 0; // PB14
-        data.mcl_btns |= (port_b_din & (1 << 13)) ? 0x10 : 0; // PB13
-        data.mcl_btns |= (port_a_din & (1 << 12)) ? 0x20 : 0; // PA12
-        data.mcl_btns |= (port_a_din & (1 << 11)) ? 0x40 : 0; // PA11
-        data.mcl_btns |= (port_f_din & (1 << 6)) ? 0x80 : 0; // PF6
-        data.mcl_btns |= (port_f_din & (1 << 7)) ? 0x100 : 0; // PF7
-        data.mcl_btns |= (port_c_din & (1 << 3)) ? 0x200 : 0; // PC3
-        data.mcl_btns |= (port_f_din & (1 << 4)) ? 0x400 : 0; // PF4
-        data.mcl_btns |= (port_f_din & (1 << 5)) ? 0x800 : 0; // PF5
-        data.mcl_btns |= (port_c_din & (1 << 4)) ? 0x1000 : 0; // PC4
+        data.mcl_btns |= (port_f_din & (1 << 0)) ? 0x001 : 0; // PF0  -> bit 0 (MCL_LEFT)
+        data.mcl_btns |= (port_f_din & (1 << 1)) ? 0x002 : 0; // PF1  -> bit 1 (MCL_DOWN)
+        data.mcl_btns |= (port_c_din & (1 << 0)) ? 0x004 : 0; // PC0  -> bit 2 (MCL_RIGHT)
+        data.mcl_btns |= (port_b_din & (1 << 3)) ? 0x008 : 0; // PB3  -> bit 3 (MCL_UP)
+        data.mcl_btns |= (port_a_din & (1 << 11)) ? 0x010 : 0; // PA11 -> bit 4 (MCL_A)
+        data.mcl_btns |= (port_a_din & (1 << 10)) ? 0x020 : 0; // PA10 -> bit 5 (MCL_B)
+        data.mcl_btns |= (port_c_din & (1 << 8)) ? 0x040 : 0; // PC8  -> bit 6 (MCL_X)
+        data.mcl_btns |= (port_c_din & (1 << 7)) ? 0x080 : 0; // PC7  -> bit 7 (MCL_Y)
+        data.mcl_btns |= (port_b_din & (1 << 13)) ? 0x100 : 0; // PB13 -> bit 8 (MCL_P)
+        data.mcl_btns |= (port_b_din & (1 << 12)) ? 0x200 : 0; // PB12 -> bit 9 (MCL_R)
+        data.mcl_btns |= (port_b_din & (1 << 1)) ? 0x400 : 0; // PB1  -> bit 10 (MCL_S1)
+        data.mcl_btns |= (port_b_din & (1 << 2)) ? 0x800 : 0; // PB2  -> bit 11 (MCL_S2)
         data.mcl_btns = ~data.mcl_btns;
-        data.mcl_btns = data.mcl_btns & 0x1FFF; // only 13 bits
+        data.mcl_btns = data.mcl_btns & 0x0FFF; // only 12 bits
 
-        for (int i=0;i<13;i++){
+        for (int i=0;i<12;i++){
             if (data.mcl_btns & (1 << i)){
                 if (mcl_btn_timestamps[i] == 0){
                     mcl_btn_timestamps[i] = HAL_GetTick();
