@@ -194,12 +194,16 @@ int main(void)
             }
         }
 
-        // function buttons are (PC5, PB0)
+        // function buttons are (0: F1 PC5, 1: F2 PB0, 2: POT1 (left) PC3, 3: POT2 PF4, 4: POT3 PF5, 5: POT4 (right) PC4)
         data.f_btns = 0;
         data.f_btns |= (port_c_din & (1 << 5)) ? 0x01 : 0; // PC5
         data.f_btns |= (port_b_din & (1 << 0)) ? 0x02 : 0; // PB0
+        data.f_btns |= (port_c_din & (1 << 3)) ? 0x04 : 0; // PC3
+        data.f_btns |= (port_f_din & (1 << 4)) ? 0x08 : 0; // PF4
+        data.f_btns |= (port_f_din & (1 << 5)) ? 0x10 : 0; // PF5
+        data.f_btns |= (port_c_din & (1 << 4)) ? 0x20 : 0; // PC4
         data.f_btns = ~data.f_btns;
-        data.f_btns = data.f_btns & 0x02; // only 2 bits
+        data.f_btns = data.f_btns & 0x3F; // only 6 bits
 
         // check if function buttons are long pressed
         for (int i=0;i<2;i++){
