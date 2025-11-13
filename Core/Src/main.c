@@ -28,6 +28,7 @@
 /* USER CODE BEGIN Includes */
 #include <string.h>
 #include "endless_pot.h"
+#include "lis3d.h"
 #include <stdlib.h>
 /* USER CODE END Includes */
 
@@ -89,6 +90,15 @@ int main(void)
   /* USER CODE BEGIN Init */
     memset(&data, 0, sizeof(ui_data_t));
     memset(&t_d_buffer, 0, sizeof(ui_data_t));
+    // Allocate a buffer for reading data from the sensor.
+    // Six bytes required to read XYZ data.
+    uint8_t xyz_buf[6] = { 0 };
+
+    // New instance of the lis3dh convenience object.
+    lis3dh_t lis3dh;
+
+    // lis3dh calls return this HAL status type.
+    HAL_StatusTypeDef status;
 
   /* USER CODE END Init */
 
@@ -134,6 +144,12 @@ int main(void)
         Error_Handler();
     }
 
+    // 3d sensor
+    status = lis3dh_init(&lis3dh, &hi2c1, xyz_buf, 6);
+
+    if (status != HAL_OK) {
+        // Unable to communicate with device!
+    }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -312,6 +328,12 @@ int main(void)
                 // swap first and second bit of pot state as movement inverted
                 data.pot_states[i] = (data.pot_states[i] & 0xFFFFFFFC) | ((data.pot_states[i] & 0x02) >> 1) | ((data.pot_states[i] & 0x01) << 1);
             }
+        }
+
+        // read accelerometer
+        if (lis3dh_xyz_available(&lis3dh)) {
+            status = lis3dh_get_xyz(&lis3dh);
+            // You now have raw acceleration of gravity in lis3dh->x, y, and z.
         }
 
         // wait for last i2c transfer request from rp2040 to complete
