@@ -179,14 +179,10 @@ int main(void)
         data.d_btns |= (port_b_din & (1 << 9))  ? 0x0002 : 0; // PB9  -> bit 1
         data.d_btns |= (port_b_din & (1 << 5))  ? 0x0004 : 0; // PB5  -> bit 2
         data.d_btns |= (port_b_din & (1 << 4))  ? 0x0008 : 0; // PB4  -> bit 3
-
         data.d_btns |= (port_c_din & (1 << 9))  ? 0x0010 : 0; // PC9  -> bit 4
-
         data.d_btns |= (port_b_din & (1 << 14)) ? 0x0020 : 0; // PB14 -> bit 5
-
         data.d_btns |= (port_b_din & (1 << 15)) ? 0x0040 : 0; // PB15 -> bit 6
         data.d_btns |= (port_c_din & (1 << 6))  ? 0x0080 : 0; // PC6  -> bit 7
-
         data.d_btns |= (port_c_din & (1 << 15)) ? 0x0100 : 0; // PC15 -> bit 8
         data.d_btns |= (port_c_din & (1 << 13)) ? 0x0200 : 0; // PC13 -> bit 9
         data.d_btns |= (port_b_din & (1 << 8))  ? 0x0400 : 0; // PB8  -> bit 10
