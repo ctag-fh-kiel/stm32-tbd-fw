@@ -35,21 +35,35 @@ SOFTWARE.
 #include "stm32f0xx_hal.h"
 
 typedef struct lis3dh {
-	/* The HAL I2C_HandleTypeDef. */
-	void* i2c;
+    /* The HAL I2C_HandleTypeDef. */
+    void* i2c;
 
-	/* The 7-bit i2c address. */
-	uint16_t i2c_addr;
+    /* The 7-bit i2c address. */
+    uint16_t i2c_addr;
 
-	/* Data reported by the sensor */
-	int x;
-	int y;
-	int z;
-	int t;
+    /* Data reported by the sensor */
+    int x;
+    int y;
+    int z;
+    int t;
 
-	/* Buffer for data read from the device. Must be 6 bytes to ready XYZ data. */
-	uint16_t bufsize;
-	uint8_t *buf;
+    /* Buffer for data read from the device. Must be 6 bytes to ready XYZ data. */
+    uint16_t bufsize;
+    uint8_t *buf;
+
+    /* --- EMA (1-pole IIR) smoothing state (fixed-point) --- */
+    /* Last raw samples (for diagnostics); not required for filter math */
+    int32_t x_raw;
+    int32_t y_raw;
+    int32_t z_raw;
+    /* Internal EMA accumulators in sensor units */
+    int32_t ema_x;
+    int32_t ema_y;
+    int32_t ema_z;
+    /* EMA coefficient in Q15: y += alpha*(x - y), alpha in [0, 32768] */
+    uint16_t ema_alpha_q15;
+    /* Seed flag to initialize EMA with first sample */
+    uint8_t ema_initialized;
 } lis3dh_t;
 
 /**
@@ -114,7 +128,7 @@ typedef struct lis3dh {
 /**
  * CTRL_REG1
  */
-#define DATA_RATE_POWER_DOWN	    (0x0) // Power-down mode. Default.
+#define DATA_RATE_POWER_DOWN        (0x0) // Power-down mode. Default.
 #define DATA_RATE_LOW_1Hz       (0x1 << 4)
 #define DATA_RATE_LOW_10Hz      (0x2 << 4)
 #define DATA_RATE_LOW_25Hz      (0x3 << 4)
@@ -136,6 +150,13 @@ typedef struct lis3dh {
 #define INT1_WTM                (1 << 2) // FIFO watermark interrupt on INT1. Default: 0
 #define INT1_OVERRUN            (1 << 1) // FIFO overrun interrupt on INT1. Default: 0
 
+/*
+ * EMA default: target ~10 ms time constant at 100 Hz sampling.
+ * alpha = 1 - exp(-Ts/tau) -> Ts=tau -> alpha ~= 0.6321205588
+ * Q15(alpha) ~= round(0.6321205588 * 32768) = 20725
+ */
+#define LIS3DH_EMA_ALPHA_Q15_DEFAULT ((uint16_t)20725)
+
 HAL_StatusTypeDef lis3dh_init(lis3dh_t *lis3dh, I2C_HandleTypeDef *i2c, uint8_t *buf, uint16_t bufsize);
 
 bool lis3dh_xyz_available(lis3dh_t *lis3dh);
@@ -149,4 +170,10 @@ HAL_StatusTypeDef lis3dh_get_xyz(lis3dh_t *lis3dh);
 
 HAL_StatusTypeDef lis3dh_get_temp(lis3dh_t *lis3dh);
 
+/* Configure EMA alpha in Q15. alpha in [0, 32768], where 0=no update, 32768=immediate (no filtering). */
+static inline void lis3dh_set_ema_alpha_q15(lis3dh_t *lis3dh, uint16_t alpha_q15) {
+    lis3dh->ema_alpha_q15 = alpha_q15;
+}
+
 #endif /* INC_LIS3DH_H_ */
+
