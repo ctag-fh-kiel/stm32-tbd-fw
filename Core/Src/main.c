@@ -57,7 +57,7 @@ static ui_data_t t_d_buffer; // transfer data buffer
 static uint16_t adc_vals[8]; // adc values, dma buffer
 static endless_pot_t pots[4]; // endless pots states
 static uint32_t d_btn_timestamps[16]; // timestamps for buttons
-static uint32_t f_btn_timestamps[5]; // timestamps for buttons
+static uint32_t f_btn_timestamps[6]; // timestamps for buttons
 static uint32_t mcl_btn_timestamps[13]; // timestamps for buttons
 /* USER CODE END PV */
 
@@ -174,12 +174,12 @@ int main(void)
         uint16_t port_d_din = GPIOD->IDR;
         uint16_t port_f_din = GPIOF->IDR;
 
-        // data button 0-15 mapping is (PC14, PB9, PB5, PB6, PC9, PB14, PB15, PC6, PC15, PC13, PB8, PC12, PC11, PC10, PA15, PF7)
+        // data button 0-15 mapping is (PC14, PB9, PB5, PB4, PC9, PB14, PB15, PC6, PC15, PC13, PB8, PC12, PC11, PC10, PA15, PF7)
         data.d_btns = 0;
         data.d_btns |= (port_c_din & (1 << 14)) ? 0x0001 : 0; // PC14 -> bit 0
         data.d_btns |= (port_b_din & (1 << 9))  ? 0x0002 : 0; // PB9  -> bit 1
         data.d_btns |= (port_b_din & (1 << 5))  ? 0x0004 : 0; // PB5  -> bit 2
-        data.d_btns |= (port_b_din & (1 << 6))  ? 0x0008 : 0; // PB6  -> bit 3
+        data.d_btns |= (port_b_din & (1 << 4))  ? 0x0008 : 0; // PB4  -> bit 3
         data.d_btns |= (port_c_din & (1 << 9))  ? 0x0010 : 0; // PC9  -> bit 4
         data.d_btns |= (port_b_din & (1 << 14)) ? 0x0020 : 0; // PB14 -> bit 5
         data.d_btns |= (port_b_din & (1 << 15)) ? 0x0040 : 0; // PB15 -> bit 6
@@ -215,15 +215,15 @@ int main(void)
         data.f_btns = 0;
         data.f_btns |= (port_c_din & (1 << 5)) ? 0x01 : 0; // PC5
         data.f_btns |= (port_b_din & (1 << 0)) ? 0x02 : 0; // PB0
-        data.f_btns |= (port_c_din & (1 << 3)) ? 0x04 : 0; // PC3
-        data.f_btns |= (port_f_din & (1 << 4)) ? 0x08 : 0; // PF4
-        data.f_btns |= (port_f_din & (1 << 5)) ? 0x10 : 0; // PF5
-        data.f_btns |= (port_c_din & (1 << 4)) ? 0x20 : 0; // PC4
+        data.f_btns |= (port_c_din & (1 << 3)) ? 0x20 : 0; // PC3
+        data.f_btns |= (port_f_din & (1 << 4)) ? 0x10 : 0; // PF4
+        data.f_btns |= (port_f_din & (1 << 5)) ? 0x08 : 0; // PF5
+        data.f_btns |= (port_c_din & (1 << 4)) ? 0x04 : 0; // PC4
         data.f_btns = ~data.f_btns;
         data.f_btns = data.f_btns & 0x3F; // only 6 bits
 
         // check if function buttons are long pressed
-        for (int i=0;i<2;i++){
+        for (int i=0;i<6;i++){
             if (data.f_btns & (1 << i)){
                 if (f_btn_timestamps[i] == 0){
                     f_btn_timestamps[i] = HAL_GetTick();
@@ -320,7 +320,7 @@ int main(void)
         while (adc_dma_complete != 1);
         //memcpy(data.pot_adc_values, adc_vals, sizeof(adc_vals));
         // swap readings as in rev.c pins have been swapped
-        for (int i=0, j=7;i<8;i++, j--){
+        for (int i=0, j=7; i<8; i++, j--){
             data.pot_adc_values[i] = adc_vals[j];
         }
         for (int i=0;i<4;i++){
