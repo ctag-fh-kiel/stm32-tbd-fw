@@ -318,17 +318,22 @@ int main(void)
 
         // wait for adc
         while (adc_dma_complete != 1);
-        memcpy(data.pot_adc_values, adc_vals, sizeof(adc_vals));
+        //memcpy(data.pot_adc_values, adc_vals, sizeof(adc_vals));
+        // swap readings as in rev.c pins have been swapped
+        for (int i=0, j=7;i<8;i++, j--){
+            data.pot_adc_values[i] = adc_vals[j];
+        }
         for (int i=0;i<4;i++){
             endless_pot_update(&pots[i], data.pot_adc_values[i*2], data.pot_adc_values[i*2 + 1]);
             data.pot_positions[i] = pots[i].angle >> (16 - ENDLESS_POT_RESOLUTION);
-            if (i != 0) data.pot_positions[i] = 1023 - data.pot_positions[i]; // all except first inverted
+            if (i == 3) data.pot_positions[i] = 1023 - data.pot_positions[i]; // all except last inverted
             data.pot_states[i] = pots[i].state;
-            if (i == 0){
+            if (i == 3){
                 // swap first and second bit of pot state as movement inverted
                 data.pot_states[i] = (data.pot_states[i] & 0xFFFFFFFC) | ((data.pot_states[i] & 0x02) >> 1) | ((data.pot_states[i] & 0x01) << 1);
             }
         }
+
 
         // read accelerometer
         if (lis3dh_xyz_available(&lis3dh)) {
