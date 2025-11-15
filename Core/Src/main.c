@@ -338,6 +338,15 @@ int main(void)
         if (lis3dh_xyz_available(&lis3dh)) {
             status = lis3dh_get_xyz(&lis3dh);
             // You now have raw acceleration of gravity in lis3dh->x, y, and z.
+            if (status != HAL_OK){
+                data.accelerometer[0] = 0;
+                data.accelerometer[1] = 0;
+                data.accelerometer[2] = 0;
+            }else{
+                data.accelerometer[0] = lis3dh.x & 0xFFFF;
+                data.accelerometer[1] = lis3dh.y & 0xFFFF;
+                data.accelerometer[2] = lis3dh.z & 0xFFFF;
+            }
         }
 
         // wait for last i2c transfer request from rp2040 to complete

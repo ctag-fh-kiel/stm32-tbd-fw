@@ -54,6 +54,7 @@ typedef struct{
     // 12-bit
     uint16_t mcl_btns;
     uint16_t mcl_btns_long_press;
+    int16_t accelerometer[3];
     uint32_t systicks; // timestamp
 } ui_data_t;
 /* USER CODE END ET */
